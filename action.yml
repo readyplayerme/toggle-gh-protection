@@ -18,10 +18,6 @@ inputs:
     required: true
     default: on
 
-  branch:
-    required: false
-    default: main
-
   users:
     required: false
 

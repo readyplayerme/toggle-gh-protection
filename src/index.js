@@ -2,7 +2,7 @@ const core = require('@actions/core');
 const { getOctokit, context } = require('@actions/github');
 
 const githubToken = core.getInput('github-token') || '';
-const branch = core.getInput('branch');
+const branch = context.ref.replace('refs/heads/', '');
 const users = (core.getInput('users') || '').split(',');
 const teams = (core.getInput('teams') || '').split(',');
 const contexts = (core.getInput('contexts') || '').split(',');
@@ -11,7 +11,7 @@ const protectionOn = core.getInput('protection') === 'on' ? true : false;
 const run = async () => {
   try {
     const octokit = getOctokit(githubToken);
-    const { owner, repo } = context.repo;
+    const { owner, repo, ref } = context.repo;
 
     if (protectionOn) {
       await octokit.rest.repos.updateBranchProtection({
@@ -20,29 +20,11 @@ const run = async () => {
         branch,
         required_status_checks: {
           strict: true,
-          contexts,
-        },
-        enforce_admins: true,
-
-        required_pull_request_reviews: {
-          dismissal_restrictions: {
-            users,
-            teams,
-          },
-          dismiss_stale_reviews: true,
-          require_code_owner_reviews: true,
-          required_approving_review_count: 1,
-          bypass_pull_request_allowances: {
-            users,
-            teams,
-          },
-        },
-
-        enforce_admins: null,
-        restrictions: {
-          users,
-          teams,
-        },
+          contexts: [
+            'Main / Basic validations (Unit, Lint)',
+            'Main / End2End tests'
+          ]
+        }
       });
 
       core.info('Protection has been turned on.');
